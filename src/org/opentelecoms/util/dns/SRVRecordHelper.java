@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.ExtendedResolver;
@@ -14,9 +15,9 @@ import org.xbill.DNS.Resolver;
 import org.xbill.DNS.SRVRecord;
 import org.xbill.DNS.Type;
 
-import android.util.Log;
-
 public class SRVRecordHelper extends Vector<InetSocketAddress> {
+	
+	Logger logger = Logger.getLogger(getClass().getName());
 	
 	/**
 	 * 
@@ -59,7 +60,7 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 				}
 			}
 		} catch (Exception ex) {
-			Log.w(TAG, "Exception during DNS lookup: ", ex);
+			logger.warning("Exception during DNS lookup: " + ex.getClass().getName() + ", " + ex.getMessage());
 		}
 
 		for(SRVRecord srvRecord : srvRecords) {
