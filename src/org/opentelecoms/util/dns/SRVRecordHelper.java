@@ -13,6 +13,7 @@ import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.Resolver;
 import org.xbill.DNS.SRVRecord;
+import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.Type;
 
 public class SRVRecordHelper extends Vector<InetSocketAddress> {
@@ -37,7 +38,14 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 			Lookup lookup = new Lookup(mDomain, Type.SRV);
 			lookup.setResolver(resolver);
 			Vector<Record> _records = new Vector<Record>();
-			Record[] records = lookup.run();
+			Record[] records = null;
+			
+			try {
+				records = lookup.run();
+			} catch (Exception ex) {
+				// ignore the exception, as we try the lookup
+				// again to search for A records
+			}
 			
 			if (records != null)
 				for(Record record : records)
@@ -45,6 +53,7 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 			
 			if(_records.size() == 0) {
 				lookup = new Lookup(domain, Type.A);
+				lookup.setResolver(resolver);
 				records = lookup.run();
 				if (records != null)
 					for(Record record : records)
