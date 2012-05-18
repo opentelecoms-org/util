@@ -1,0 +1,61 @@
+
+Overview
+--------
+
+This is a collection of classes that have been found to be useful
+in unified communications / VoIP projects
+
+Some of the classes are a fresh implementation from OpenTelecoms.org,
+and others have been obtained from other open source projects and
+possibly adapted in some way.
+
+Crypto classes
+--------------
+
+Export notice: no actual cryptographic code is included, so export
+restrictions do not apply.
+
+These are helper classes for Java cryptography applications.  See
+comments in the classes for details.
+
+Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
+Licensed under GPL v3
+
+DNS classes
+-----------
+
+These are helper classes for DNS (particularly SRV records).  See
+comments in the classes for details
+
+The classes depend on org.xbill.DNS (DNS Java) which is BSD licensed:
+http://www.dnsjava.org/
+
+Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
+Licensed under GPL v3
+
+Base64
+------
+
+http://iharder.sourceforge.net/current/java/base64/
+
+License info from the author's web site:
+"A Note About Public Domain:
+I have released this software into the Public Domain. That means you can do whatever you want with it. Really. You don't have to match it up with any other open source license &em; just use it. You can rename the files, move the Java packages, whatever you want. If your lawyers say you have to have a license, contact me, and I'll make a special release to you under whatever reasonable license you desire: MIT, BSD, GPL, whatever."
+
+Copyright 2012 Robert Harder https://sourceforge.net/users/rharder
+
+CRC-32C
+-------
+
+Adapted from the CRC-32C implementation in the Apache Hadoop project.
+
+Copyright 2012 Daniel Pocock <daniel@pocock.com.au> and distributed
+under the terms of the GPL v3 license.
+
+Based on work from the Apache Software Foundation, distributed under
+the Apache license v2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+With contributions from:
+Copyright (c) 2004-2006 Intel Corportation (BSD license)
+
+

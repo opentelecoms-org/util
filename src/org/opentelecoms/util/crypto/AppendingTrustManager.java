@@ -1,3 +1,31 @@
+/*
+ *  An implementation of a javax.net.ssl TrustManager that combines the 
+ *  algorithms of a user-supplied TrustManager and a default TrustManager
+ *  from the TrustManagerFactory
+ *  
+ *  Each certificate is checked against the default TrustManager, and if
+ *  it is rejected, it is then checked against the user-supplied TrustManager
+ *  
+ *  A typical application of this class is to support all the CAs on a
+ *  platform (such as Android's built-in CAs) but also trust some
+ *  additional CA (for example, the CACert.org root)
+ *  
+ *  Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.opentelecoms.util.crypto;
 
 import java.security.KeyStore;
