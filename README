@@ -9,6 +9,17 @@ Some of the classes are a fresh implementation from OpenTelecoms.org,
 and others have been obtained from other open source projects and
 possibly adapted in some way.
 
+This code is used to support a range of projects:
+
+  http://www.lumicall.org             Lumicall SIP dialer for Android
+
+  http://www.opentelecoms.org/zrtp    OpenTelecoms.org ZRTP stack for Java
+
+Please see the OpenTelecoms.org web site for more details about
+secure Federated VoIP (including SIP and Jabber/XMPP):
+
+  http://www.opentelecoms.org/
+
 Crypto classes
 --------------
 
