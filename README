@@ -32,6 +32,15 @@ comments in the classes for details.
 Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
 Licensed under GPL v3
 
+CSV classes
+-----------
+
+These are helper classes for comma-separated-values (CSV) files.
+See comments in the classes for details.
+
+Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
+Licensed under GPL v3
+
 DNS classes
 -----------
 
