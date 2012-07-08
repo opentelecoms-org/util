@@ -28,8 +28,13 @@ package org.opentelecoms.util.dns;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Collection;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.xbill.DNS.ARecord;
@@ -47,6 +52,56 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 	
 	private static final long serialVersionUID = -2656070797887094655L;
 	final private String TAG = "SRVRecordHelper";
+
+	private class RecordHelperThread extends Thread {
+		
+		CyclicBarrier barrier;
+		String domain;
+		int type;
+		Vector<Record> records;
+		public RecordHelperThread(CyclicBarrier barrier, String domain, int type) {
+			this.barrier = barrier;
+			this.domain = domain;
+			this.type = type;
+		}
+				
+		public Collection<Record> getRecords() {
+			return records;
+		}
+
+		public void run() {
+			try {
+				
+				try {
+					Resolver resolver = new ExtendedResolver();
+					resolver.setTimeout(2);
+					Lookup lookup = new Lookup(domain, type);
+					lookup.setResolver(resolver);
+					records = new Vector<Record>();
+					Record[] _records = null;
+				
+					try {
+						_records = lookup.run();
+					} catch (Exception ex) {
+						// ignore the exception, as we try the lookup
+						// in different ways
+						logger.log(Level.SEVERE, "exception", ex);
+					}
+				
+					if (_records != null)
+						for(Record record : _records)
+							records.add(record);
+				} catch (Exception ex) {
+					records = null;
+				}
+				barrier.await();
+			} catch (InterruptedException ex) {
+				ex.printStackTrace();
+			} catch (BrokenBarrierException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
 	
 	public SRVRecordHelper(String service, String protocol, String domain, int defaultPort) {
 		String mDomain = "_" + service + "._" + protocol + "." + domain;
@@ -55,37 +110,29 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 		Vector<ARecord> aRecords = new Vector<ARecord>();
 		
 		try {
-			Resolver resolver = new ExtendedResolver();
-			resolver.setTimeout(2);
-			Lookup lookup = new Lookup(mDomain, Type.SRV);
-			lookup.setResolver(resolver);
-			Vector<Record> _records = new Vector<Record>();
-			Record[] records = null;
 			
+			CyclicBarrier b = new CyclicBarrier(3);
+			
+			RecordHelperThread srv_t = new RecordHelperThread(b, mDomain, Type.SRV);
+			RecordHelperThread a_t = new RecordHelperThread(b, domain, Type.A);
+			srv_t.start();
+			a_t.start();
+			
+			// Wait for all lookups to finish
 			try {
-				records = lookup.run();
-			} catch (Exception ex) {
-				// ignore the exception, as we try the lookup
-				// again to search for A records
-			}
-			
-			if (records != null)
-				for(Record record : records)
-					_records.add(record);
-			
-			if(_records.size() == 0) {
-				lookup = new Lookup(domain, Type.A);
-				lookup.setResolver(resolver);
-				records = lookup.run();
-				if (records != null)
-					for(Record record : records)
-						_records.add(record);
+				b.await();
+			} catch (InterruptedException e) {
+				logger.log(Level.SEVERE, "InterruptedException", e);
+			} catch (BrokenBarrierException e) {
+				logger.log(Level.SEVERE, "BrokenBarrierException", e);
 			}
 
-			for (Record record : _records) {
+			for (Record record : srv_t.getRecords()) {
 				if(record instanceof SRVRecord) {
 					srvRecords.add((SRVRecord)record);
 				}
+			}
+			for (Record record : a_t.getRecords()) {
 				if(record instanceof ARecord) {
 					aRecords.add((ARecord)record);
 				}
