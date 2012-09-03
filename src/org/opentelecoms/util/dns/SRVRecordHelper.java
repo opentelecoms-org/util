@@ -147,7 +147,7 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 		
 		if(defaultPort > 0 && size() == 0) {
 			for(ARecord record : aRecords) {
-				add(new InetSocketAddress(record.getName().toString(), defaultPort));
+				add(new InetSocketAddress(record.getAddress(), defaultPort));
 			}
 		}
 		
