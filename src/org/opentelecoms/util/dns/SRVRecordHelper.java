@@ -25,11 +25,13 @@
 
 package org.opentelecoms.util.dns;
 
-import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.BrokenBarrierException;
@@ -40,6 +42,7 @@ import java.util.logging.Logger;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.ExtendedResolver;
 import org.xbill.DNS.Lookup;
+import org.xbill.DNS.Name;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.Resolver;
 import org.xbill.DNS.SRVRecord;
@@ -47,11 +50,18 @@ import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.Type;
 
 public class SRVRecordHelper extends Vector<InetSocketAddress> {
+
+	public static final int DEFAULT_SIP_PORT = 5060;
+	public static final int DEFAULT_SIPS_PORT = 5061;
+	public static final String SIPS_SCHEME = "sips";
 	
 	Logger logger = Logger.getLogger(getClass().getName());
 	
 	private static final long serialVersionUID = -2656070797887094655L;
 	final private String TAG = "SRVRecordHelper";
+	private String useProtocol;
+
+	public String getProtocol() { return useProtocol; }
 
 	private class RecordHelperThread extends Thread {
 		
@@ -103,19 +113,65 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 		}
 	}
 	
-	public SRVRecordHelper(String service, String protocol, String domain, int defaultPort) {
-		String mDomain = "_" + service + "._" + protocol + "." + domain;
-		
+	public SRVRecordHelper(String service, String protocol, String domain, int port) {
+		boolean withProtocol = protocol.length() > 0;
+		boolean withPort = port > 0;
+		boolean withNummeric = isNumericAddress(domain);
+
 		TreeSet<SRVRecord> srvRecords = new TreeSet<SRVRecord>(new SRVRecordComparator());
 		Vector<ARecord> aRecords = new Vector<ARecord>();
-		
+
+		if ( withProtocol ) {
+			useProtocol = protocol;
+		} else {
+			if ( withNummeric || withPort) {
+				if ( service.equals(SIPS_SCHEME) ) {
+					useProtocol = "tcp";
+				} else {
+					useProtocol = "udp";
+				}
+			} else {
+				// TODO try NAPTR
+				// When no NAPTR found try SRV
+				// Only SRV for now
+				if ( service.equals(SIPS_SCHEME) )
+					useProtocol = "tcp";
+				else
+					useProtocol = "udp";
+			}
+		}
+
+		if ( withNummeric ) {
+			int usePort = DEFAULT_SIP_PORT;
+
+			if ( withPort )
+				usePort = port;
+			else if ( service.equals( SIPS_SCHEME ))
+				usePort = DEFAULT_SIPS_PORT;
+
+			add(new InetSocketAddress(domain,
+						  usePort));
+			// No DNS lookup needed
+			return;
+		}
+
 		try {
-			
-			CyclicBarrier b = new CyclicBarrier(3);
-			
-			RecordHelperThread srv_t = new RecordHelperThread(b, mDomain, Type.SRV);
+			int numQueries;
+			if ( withPort )
+				numQueries = 1; // A
+			else
+				numQueries = 2; // SRV + A
+
+			CyclicBarrier b = new CyclicBarrier(numQueries + 1);
+			RecordHelperThread srv_t = null;
 			RecordHelperThread a_t = new RecordHelperThread(b, domain, Type.A);
-			srv_t.start();
+
+			if ( !withPort ) {
+				String mDomain = "_" + service + "._" + useProtocol + "." + domain;
+				srv_t = new RecordHelperThread(b, mDomain, Type.SRV);
+				srv_t.start();
+			}
+
 			a_t.start();
 			
 			// Wait for all lookups to finish
@@ -127,9 +183,15 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 				logger.log(Level.SEVERE, "BrokenBarrierException", e);
 			}
 
-			for (Record record : srv_t.getRecords()) {
-				if(record instanceof SRVRecord) {
-					srvRecords.add((SRVRecord)record);
+			if ( srv_t != null ) {
+				for (Record record : srv_t.getRecords()) {
+					if(record instanceof SRVRecord) {
+						srvRecords.add((SRVRecord)record);
+					}
+					if(record instanceof ARecord) {
+						// In case of additional records
+						aRecords.add((ARecord)record);
+					}
 				}
 			}
 			for (Record record : a_t.getRecords()) {
@@ -141,16 +203,106 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 			logger.warning("Exception during DNS lookup: " + ex.getClass().getName() + ", " + ex.getMessage());
 		}
 
-		for(SRVRecord srvRecord : srvRecords) {
-			add(new InetSocketAddress(srvRecord.getTarget().toString(), srvRecord.getPort()));
-		}
-		
-		if(defaultPort > 0 && size() == 0) {
-			for(ARecord record : aRecords) {
-				add(new InetSocketAddress(record.getAddress(), defaultPort));
+		boolean srvFound = false;
+		if ( srvRecords.size() > 0 ) {
+			// Process SRV records
+			for(SRVRecord srvRecord : srvRecords) {
+				Name target = srvRecord.getTarget();
+				int usePort = srvRecord.getPort();
+				boolean addrFound = false;
+
+				// Check A records first
+				for(ARecord aRecord : aRecords) {
+					if ( aRecord.getName() == target ) {
+						add(new InetSocketAddress(aRecord.getAddress(), usePort));
+						addrFound = true;
+						break;
+					}
+				}
+
+				if ( addrFound )
+					continue;
+				// Lookup addresses
+				try {
+					InetAddress addr = InetAddress.getByName(target.toString());
+					add(new InetSocketAddress(addr, usePort));
+				} catch (UnknownHostException e) {
+				}
 			}
 		}
-		
+
+		if( size() == 0 ) {
+			// SRV not used or not found
+			// Fallback to using A records
+			int usePort = DEFAULT_SIP_PORT;
+
+			if ( withPort )
+				usePort = port;
+			else if ( service.equals( SIPS_SCHEME ))
+				usePort = DEFAULT_SIPS_PORT;
+			for(ARecord record : aRecords) {
+				add(new InetSocketAddress(record.getAddress(), usePort));
+			}
+		}
 	}
 
+	protected boolean isNumericAddress(String addr) {
+		if ( addr == null )
+			return false;
+		if ( addr.contains(":") )
+			return isNumericIp6Address(addr);
+		else
+			return isNumericIp4Address(addr);
+	}
+
+	protected boolean isNumericIp4Address(String addr) {
+		if ( addr == null ||
+		     addr.length() < 7 || addr.length() > 15)
+			return false;
+
+		StringTokenizer token = new StringTokenizer(addr,".");
+		if ( token.countTokens() != 4)
+			return false;
+
+		while ( token.hasMoreTokens()) {
+			String numStr = token.nextToken();
+			try {
+				int num = Integer.parseInt(numStr);
+				if ( num < 0 || num > 255)
+					return false;
+			} catch (NumberFormatException ex) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private final int maxIp6Len = 8 * (4 + 1) - 1;
+
+	protected boolean isNumericIp6Address(String addr) {
+		if ( addr == null ||
+		     addr.length() < 2 || addr.length() > maxIp6Len )
+			return false;
+
+		StringTokenizer token = new StringTokenizer(addr,":");
+		if ( token.countTokens() < 3 ||
+		     token.countTokens() > 8 )
+			return false;
+
+		while ( token.hasMoreTokens()) {
+			String numStr = token.nextToken();
+			if ( numStr.length() == 0 )
+				// TODO check number of empty fields
+				continue;
+
+			try {
+				int num = Integer.parseInt(numStr, 16);
+					if ( num < 0 || num > 65535 )
+						return false;
+			} catch (NumberFormatException ex) {
+				return false;
+			}
+		}
+		return true;
+	}
 }
