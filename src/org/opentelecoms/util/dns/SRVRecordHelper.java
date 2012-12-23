@@ -42,6 +42,7 @@ import org.xbill.DNS.ExtendedResolver;
 import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.Resolver;
+import org.xbill.DNS.ResolverConfig;
 import org.xbill.DNS.SRVRecord;
 import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.Type;
@@ -110,6 +111,25 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 		Vector<ARecord> aRecords = new Vector<ARecord>();
 		
 		try {
+			
+			// FIXME - we should only need to do this refresh
+			// when network state changes.
+			// By default, dnsjava only obtains nameservers
+			// the first time the ResolverConfig is loaded.
+			// That is not appropriate for mobile devices that roam
+			// across different wifi and GSM networks throughout
+			// the day
+			long t1 = System.currentTimeMillis();
+			ResolverConfig.refresh();
+			long t2 = System.currentTimeMillis() - t1;
+			String[] servers = ResolverConfig.getCurrentConfig().servers();
+			StringBuffer sb = new StringBuffer();
+			if(servers != null)
+				for(String s : servers) 
+					sb.append(" ").append(s);
+			logger.log(Level.INFO, "using nameservers: " +
+			     sb.toString() +
+			    ", dnsjava refresh took " + t2 + "ms");
 			
 			CyclicBarrier b = new CyclicBarrier(3);
 			
