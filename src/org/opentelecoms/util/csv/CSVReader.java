@@ -26,12 +26,17 @@ import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Utility class for reading CSV data from input streams and dynamically
  * creating an object instance for each row.
  */
 public class CSVReader {
+	
+	public static final String DEFAULT_DATE_FORMAT = "dd/MM/yyyy";
+	
+	Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
   Class targetClass;
   Class[] pList;
@@ -58,10 +63,7 @@ public class CSVReader {
   }
 
   public CSVReader(Class targetClass, Class[] paramList) throws Exception {
-    this.targetClass = targetClass;
-    this.pList = paramList;
-    constructor = targetClass.getConstructor(paramList);
-    dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+	  this(targetClass, paramList, DEFAULT_DATE_FORMAT);
   }
 
   /**
@@ -71,6 +73,7 @@ public class CSVReader {
    * @param in a BufferedReader that is reading CSV format text
    */
   public Object read(BufferedReader in) throws Exception {
+	  int i = 0;
     try {
       String inputLine = in.readLine();
       if(inputLine == null)
@@ -82,7 +85,6 @@ public class CSVReader {
       st.wordChars(0, 255);
       st.ordinaryChar(',');
       st.quoteChar('"');
-      int i = 0;
       args[0] = getDefaultValue(pList[i]);
       while(i < pList.length) {
         st.nextToken();
@@ -115,11 +117,12 @@ public class CSVReader {
           else
             return null;
 	} else {
-	  System.err.println("Unknown type: " + st.ttype);
+	  logger.severe("Column: " + i + ", unknown type: " + st.ttype);
 	}
       }
       return constructor.newInstance(args);
     } catch (Exception e) {
+    	logger.severe("exception while parsing column " + (i+1) + ":" + e.getMessage());
       throw e;
     }
   }
@@ -139,18 +142,21 @@ public class CSVReader {
    * Read all lines from in, and return a Vector containing instances
    * of targetClass, one instance per CSV record.
    */
-  public Vector readAll(BufferedReader in) throws Exception {
-    Vector v = new Vector();
+  public List readAll(BufferedReader in) throws Exception {
+	  int row = 1;
+    ArrayList r = new ArrayList();
     try {
       Object o = read(in);
       while(o != null) {
-	v.add(o);
+	r.add(o);
+	row++;
 	o = read(in);
       }
     } catch (Exception e) {
+    	logger.severe("exception while reading row " + row + ":" + e.getMessage());
       throw e;
     }
-    return v;
+    return r;
   }
 
 }
