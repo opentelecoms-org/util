@@ -40,6 +40,7 @@ public class CSVReader {
 
   Class targetClass;
   Class[] pList;
+  Constructor[] pConstructor;
   Constructor constructor;
   DateFormat dateFormat;
 
@@ -58,6 +59,9 @@ public class CSVReader {
   public CSVReader(Class targetClass, Class[] paramList, String dateFormat) throws Exception {
     this.targetClass = targetClass;
     this.pList = paramList;
+    pConstructor = new Constructor[pList.length];
+    for(int i = 0; i < pList.length; i++)
+    	pConstructor[i] = pList[i].getConstructor(String.class); 
     constructor = targetClass.getConstructor(paramList);
     this.dateFormat = new SimpleDateFormat(dateFormat);
   }
@@ -105,7 +109,7 @@ public class CSVReader {
 	  } else if(pList[i] == java.math.BigDecimal.class) {
 	    args[i] = new BigDecimal(st.sval);
           } else {
-            args[i] = st.sval;
+            args[i] = pConstructor[i].newInstance(st.sval);
           }
 	} else if(st.ttype == ',') {
           i++;
