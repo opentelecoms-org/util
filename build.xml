@@ -4,7 +4,7 @@
 
     <property name="dest" value="classes"/>
     <property name="lib" value="lib"/>
-    <property name="src" value="src"/>
+    <property name="src" value="src/main/java"/>
     <property name="opentelecoms.org-util.jar" value="opentelecoms.org-util.jar"/>
 
     <path id="project.class.path">
