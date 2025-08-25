@@ -122,11 +122,11 @@ public class SRVRecordHelper extends Vector<InetSocketAddress> {
 			long t1 = System.currentTimeMillis();
 			ResolverConfig.refresh();
 			long t2 = System.currentTimeMillis() - t1;
-			String[] servers = ResolverConfig.getCurrentConfig().servers();
+			List<InetSocketAddress> servers = ResolverConfig.getCurrentConfig().servers();
 			StringBuffer sb = new StringBuffer();
 			if(servers != null)
-				for(String s : servers) 
-					sb.append(" ").append(s);
+				for(InetSocketAddress addr : servers)
+					sb.append(" ").append(addr.toString());
 			logger.log(Level.INFO, "using nameservers: " +
 			     sb.toString() +
 			    ", dnsjava refresh took " + t2 + "ms");
