@@ -11,14 +11,24 @@ possibly adapted in some way.
 
 This code is used to support a range of projects:
 
-  http://www.lumicall.org             Lumicall SIP dialer for Android
+  https://lumicall.org             Lumicall SIP dialer for Android
 
-  http://www.opentelecoms.org/zrtp    OpenTelecoms.org ZRTP stack for Java
+  https://opentelecoms.org/zrtp    OpenTelecoms.org ZRTP stack for Java
 
 Please see the OpenTelecoms.org web site for more details about
 secure Federated VoIP (including SIP and Jabber/XMPP):
 
-  http://www.opentelecoms.org/
+  https://opentelecoms.org/
+
+Building
+--------
+
+This project uses the Maven build system.
+
+To build the library without Javadoc and install it to the local Maven
+repository:
+
+$ mvn install -Dmaven.javadoc.skip=true
 
 Crypto classes
 --------------
@@ -29,7 +39,9 @@ restrictions do not apply.
 These are helper classes for Java cryptography applications.  See
 comments in the classes for details.
 
-Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
+Copyright (C) 2012 Daniel Pocock <daniel@pocock.pro>
+                   https://danielpocock.com
+
 Licensed under GPL v3
 
 CSV classes
@@ -38,7 +50,9 @@ CSV classes
 These are helper classes for comma-separated-values (CSV) files.
 See comments in the classes for details.
 
-Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
+Copyright (C) 2012 Daniel Pocock <daniel@pocock.pro>
+                   https://danielpocock.com
+
 Licensed under GPL v3
 
 DNS classes
@@ -48,10 +62,10 @@ These are helper classes for DNS (particularly SRV records).  See
 comments in the classes for details
 
 The classes depend on org.xbill.DNS (DNS Java) which is BSD licensed:
-http://www.dnsjava.org/
+https://www.dnsjava.org/
 
-Copyright 2012 Daniel Pocock <daniel@pocock.com.au>
-Licensed under GPL v3
+Copyright (C) 2012 Daniel Pocock <daniel@pocock.pro>
+                   https://danielpocock.com
 
 Base64
 ------
@@ -69,8 +83,10 @@ CRC-32C
 
 Adapted from the CRC-32C implementation in the Apache Hadoop project.
 
-Copyright 2012 Daniel Pocock <daniel@pocock.com.au> and distributed
-under the terms of the GPL v3 license.
+Copyright (C) 2012 Daniel Pocock <daniel@pocock.pro>
+                   https://danielpocock.com
+
+Distributed under the terms of the GPL v3 license.
 
 Based on work from the Apache Software Foundation, distributed under
 the Apache license v2.0 http://www.apache.org/licenses/LICENSE-2.0
