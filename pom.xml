@@ -5,7 +5,7 @@
   <artifactId>util</artifactId>
   <name>util</name>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>Useful utilities</description>
   <url>https://github.com/opentelecoms-org/util</url>
   <licenses>
